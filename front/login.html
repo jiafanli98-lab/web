@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>用户登录</title>
+    <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/style.css" rel="stylesheet">
+    <style>
+        .login-box { margin-top: 80px; padding: 40px; border: 1px solid #ddd; border-radius: 8px; }
+        #canvasCode { cursor: pointer; border: 1px solid #ccc; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-4 col-md-offset-4 login-box">
+            <h3 class="text-center">顾客登录</h3>
+            <hr>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>用户名</label>
+                    <input type="text" class="form-control" id="username" placeholder="任意用户名" required>
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" class="form-control" id="password" placeholder="任意密码" required>
+                </div>
+                <div class="form-group">
+                    <label>验证码</label>
+                    <div class="row">
+                        <div class="col-xs-7">
+                            <input type="text" class="form-control" id="inputCode" placeholder="不区分大小写" required>
+                        </div>
+                        <div class="col-xs-5">
+                            <canvas id="canvasCode" width="100" height="34" title="点击刷新"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-success btn-block">登 录</button>
+            </form>
+            <br>
+            <div class="text-center">
+                <a href="bookList.html">返回首页</a> | 
+                <a href="register.html">新顾客注册</a> | 
+                <a href="../back/login.html">管理员登录</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../script/jquery-3.7.1.min.js"></script>
+<script src="../bootstrap/js/bootstrap.min.js"></script>
+<script>
+    var generatedCode = "";
+
+    // 生成随机验证码
+    function drawCode() {
+        var canvas = document.getElementById("canvasCode");
+        var context = canvas.getContext("2d");
+        context.clearRect(0, 0, 100, 34);
+        context.fillStyle = "#f3f3f3";
+        context.fillRect(0, 0, 100, 34);
+        
+        var codes = "abcdefhjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ2345678";
+        generatedCode = "";
+        context.font = "20px Arial";
+        
+        for (var i = 0; i < 4; i++) {
+            var char = codes.charAt(Math.floor(Math.random() * codes.length));
+            generatedCode += char;
+            context.fillStyle = "rgb(" + Math.floor(Math.random()*100) + "," + Math.floor(Math.random()*100) + "," + Math.floor(Math.random()*100) + ")";
+            context.fillText(char, 10 + i * 20, 25);
+        }
+    }
+
+    $(function(){
+        drawCode();
+        $("#canvasCode").click(drawCode);
+
+        $("#loginForm").submit(function(e){
+            e.preventDefault(); // 阻止表单默认提交
+            var input = $("#inputCode").val();
+            
+            if(input.toLowerCase() !== generatedCode.toLowerCase()){
+                alert("验证码错误！");
+                drawCode();
+                $("#inputCode").val("");
+                return;
+            }
+
+            // 模拟登录成功，保存状态
+            var user = $("#username").val();
+            sessionStorage.setItem("currentUser", user);
+            alert("登录成功！欢迎 " + user);
+            window.location.href = "bookList.html";
+        });
+    });
+</script>
+</body>
+</html>

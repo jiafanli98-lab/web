@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>订单详情</title>
+    <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/style.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#">小型购书网</a>
+    </div>
+    <ul class="nav navbar-nav">
+      <li><a href="bookList.html">首页</a></li>
+      <li><a href="cart.html">购物车</a></li>
+      <li><a href="orderList.html">我的订单</a></li>
+    </ul>
+    <ul class="nav navbar-nav navbar-right" id="nav-user-area"></ul>
+  </div>
+</nav>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <ol class="breadcrumb">
+                <li><a href="bookList.html">首页</a></li>
+                <li><a href="orderList.html">订单历史</a></li>
+                <li class="active">订单详情</li>
+            </ol>
+        </div>
+    </div>
+
+    <div id="error-msg" class="alert alert-danger text-center" style="display:none;">订单不存在或参数错误</div>
+
+    <div class="row" id="order-content">
+        <div class="col-md-4">
+            <div class="panel panel-info">
+                <div class="panel-heading">订单信息</div>
+                <div class="panel-body">
+                    <p><strong>订单编号：</strong><br><span id="info-id"></span></p>
+                    <p><strong>创建时间：</strong><br><span id="info-time"></span></p>
+                    <p><strong>当前状态：</strong><span id="info-status"></span></p>
+                    <hr>
+                    <p><strong>收货人：</strong><span id="info-receiver"></span></p>
+                    <p><strong>电话：</strong><span id="info-phone"></span></p>
+                    <p><strong>地址：</strong><span id="info-address"></span></p>
+                </div>
+                <div class="panel-footer" id="action-area" style="display:none;"></div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="panel panel-default">
+                <div class="panel-heading">商品清单</div>
+                <table class="table table-bordered table-striped">
+                    <thead>
+                        <tr>
+                            <th>封面</th>
+                            <th>书名</th>
+                            <th>数量</th>
+                            <th>单价</th>
+                            <th>小计</th>
+                        </tr>
+                    </thead>
+                    <tbody id="order-items-body"></tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="5" class="text-right">
+                                <h4>总金额：<strong class="text-danger" id="info-total"></strong></h4>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../script/jquery-3.7.1.min.js"></script>
+<script src="../bootstrap/js/bootstrap.min.js"></script>
+<script>
+    $(function(){
+        checkUser();
+
+        var params = new URLSearchParams(window.location.search);
+        var orderId = params.get("orderId");
+
+        if(!orderId) {
+            showError("参数错误：未指定订单编号");
+            return;
+        }
+
+        var orders = JSON.parse(localStorage.getItem('siteOrders')) || [];
+        var order = orders.find(o => o.orderId == orderId);
+
+        if(!order) {
+            showError("未找到该订单信息");
+            return;
+        }
+
+        renderOrder(order);
+    });
+
+    function renderOrder(order) {
+        $("#info-id").text(order.orderId);
+        $("#info-time").text(order.createTime);
+        $("#info-receiver").text(order.receiver);
+        $("#info-phone").text(order.phone);
+        $("#info-address").text(order.address);
+        $("#info-total").text("￥" + parseFloat(order.amount).toFixed(2));
+
+        var statusHtml = "";
+        var actionHtml = "";
+        if(order.status == "未付款") {
+            statusHtml = '<span class="label label-danger">未付款</span>';
+            actionHtml = `<a href="pay.html?orderId=${order.orderId}" class="btn btn-primary btn-block">去支付</a>`;
+            $("#action-area").html(actionHtml).show();
+        } else if(order.status == "已付款") {
+            statusHtml = '<span class="label label-success">已付款</span>';
+        } else if(order.status == "已发货") {
+            statusHtml = '<span class="label label-info">已发货</span>';
+        }
+        $("#info-status").html(statusHtml);
+
+        var $tbody = $("#order-items-body");
+        $.each(order.items, function(i, item){
+            var sub = item.price * item.qty;
+            $tbody.append(`
+                <tr>
+                    <td><img src="${item.img}" height="40"></td>
+                    <td>${item.title}</td>
+                    <td>${item.qty}</td>
+                    <td>￥${item.price}</td>
+                    <td>￥${sub.toFixed(2)}</td>
+                </tr>
+            `);
+        });
+    }
+
+    function showError(msg) {
+        $("#order-content").hide();
+        $("#error-msg").text(msg).show();
+    }
+
+    function checkUser() {
+        var user = sessionStorage.getItem("currentUser");
+        var $nav = $("#nav-user-area");
+        if(user) {
+            $nav.html('<li><p class="navbar-text">你好，' + user + '</p></li><li><a href="#" onclick="logout()">退出</a></li>');
+        } else {
+            $nav.html('<li><a href="login.html">登录</a></li>');
+        }
+    }
+
+    window.logout = function() {
+        sessionStorage.removeItem("currentUser");
+        location.href = "login.html";
+    }
+</script>
+</body>
+</html>

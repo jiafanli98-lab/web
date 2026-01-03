@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>购书网站-首页</title>
+    <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/style.css" rel="stylesheet">
+    <style>
+        .book-img { height: 200px; object-fit: cover; }
+        .price { color: #d9534f; font-weight: bold; font-size: 16px; }
+        .out-of-stock { -webkit-filter: grayscale(100%); filter: grayscale(100%); }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#">小型购书网</a>
+    </div>
+    <ul class="nav navbar-nav">
+      <li class="active"><a href="bookList.html">首页</a></li>
+      <li><a href="cart.html">购物车</a></li>
+    </ul>
+    <ul class="nav navbar-nav navbar-right" id="nav-user-area"></ul>
+  </div>
+</nav>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <h3>热门图书推荐</h3>
+            <hr>
+        </div>
+    </div>
+
+    <div class="row" id="book-list-container">
+        </div>
+</div>
+
+<script src="../script/jquery-3.7.1.min.js"></script>
+<script src="../bootstrap/js/bootstrap.min.js"></script>
+<script>
+    // 默认图书数据（如果数据库为空，用这个初始化）
+    var defaultBooks = [
+        {id: 1, title: "一本小小的蓝色逻辑书", author: "布兰登·罗伊尔", price: 85.00, stock: 12, cover: "../cover/1696788102206.png"},
+        {id: 2, title: "Head First 设计模式", author: "Freeman", price: 61.00, stock: 5, cover: "../cover/1696788114052.png"},
+        {id: 3, title: "重构(第2版)", author: "Martin Fowler", price: 88.00, stock: 8, cover: "../cover/1696788123158.png"},
+        {id: 4, title: "大话设计模式", author: "程杰", price: 94.00, stock: 20, cover: "../cover/1696788131118.png"},
+        {id: 5, title: "计算机网络", author: "谢希仁", price: 45.00, stock: 50, cover: "../cover/1696788139527.png"}
+    ];
+
+    $(function(){
+        checkUser();
+        renderBooks();
+    });
+
+    function renderBooks() {
+        // 1. 尝试从 localStorage 获取数据（实现与后台同步）
+        var books = JSON.parse(localStorage.getItem('siteBooks'));
+        
+        // 2. 如果没有数据，初始化默认数据
+        if(!books || books.length === 0) {
+            books = defaultBooks;
+            localStorage.setItem('siteBooks', JSON.stringify(books));
+        }
+
+        // 3. 动态生成 HTML
+        var $container = $("#book-list-container");
+        $container.empty();
+
+        $.each(books, function(i, book){
+            // 检查库存状态
+            var isNoStock = book.stock <= 0;
+            var btnHtml = isNoStock 
+                ? `<button class="btn btn-default btn-sm pull-right" disabled>暂时无货</button>`
+                : `<a href="javascript:void(0);" onclick="addToCart(${book.id})" class="btn btn-danger btn-sm pull-right">加入购物车</a>`;
+            
+            var imgClass = isNoStock ? "book-img out-of-stock" : "book-img";
+
+            var html = `
+                <div class="col-sm-6 col-md-3">
+                    <div class="thumbnail">
+                        <a href="bookInfo.html?id=${book.id}"><img class="${imgClass}" src="${book.cover}"></a>
+                        <div class="caption">
+                            <h4 class="text-nowrap" title="${book.title}"><a href="bookInfo.html?id=${book.id}">${book.title}</a></h4>
+                            <p class="text-muted">作者：${book.author}</p>
+                            <p>库存：${book.stock}</p>
+                            <p>
+                                <span class="price">￥${parseFloat(book.price).toFixed(2)}</span> 
+                                ${btnHtml}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            $container.append(html);
+        });
+    }
+
+    function addToCart(id) {
+        // 获取最新数据确保信息准确
+        var books = JSON.parse(localStorage.getItem('siteBooks')) || [];
+        var book = books.find(b => b.id === id);
+        
+        if(!book) return;
+        if(book.stock <= 0) { alert("手慢了，没货了！"); return; }
+
+        var cart = JSON.parse(sessionStorage.getItem('myCart')) || [];
+        var existingItem = cart.find(item => item.id === id);
+        if(existingItem) {
+            existingItem.qty += 1;
+        } else {
+            cart.push({ id: book.id, title: book.title, price: book.price, img: book.cover, qty: 1 });
+        }
+        sessionStorage.setItem('myCart', JSON.stringify(cart));
+        alert("已成功加入购物车！");
+        location.href = "cart.html"; // 跳转看效果
+    }
+
+    function checkUser() {
+        var user = sessionStorage.getItem("currentUser");
+        var $nav = $("#nav-user-area");
+        if(user) {
+            $nav.html('<li><p class="navbar-text">你好，' + user + '</p></li><li><a href="#" onclick="logout()">退出</a></li>');
+        } else {
+            $nav.html('<li><a href="login.html">登录</a></li><li><a href="register.html">注册</a></li>');
+        }
+    }
+
+    window.logout = function() {
+        sessionStorage.removeItem("currentUser");
+        window.location.reload();
+    }
+</script>
+</body>
+</html>

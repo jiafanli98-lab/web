@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>后台订单管理</title>
+    <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row"><div class="col-md-12"><h1>购书网站后台管理平台</h1></div></div>
+    
+    <div class="row">
+        <ul class="nav nav-pills nav-justified" style="margin-bottom: 20px;">
+            <li role="presentation"><a href="../front/bookList.html" target="_blank">前台首页</a></li>
+            <li role="presentation"><a href="bookList.html">图书列表</a></li>
+            <li role="presentation"><a href="customerList.html">顾客列表</a></li>
+            <li role="presentation" class="active"><a href="orderList.html">订单列表</a></li>
+            <li role="presentation"><a href="login.html">退出</a></li>
+        </ul>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr><th>订单号</th><th>用户</th><th>金额</th><th>时间</th><th>状态</th><th>发货操作</th></tr>
+                </thead>
+                <tbody id="admin-order-body"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="../script/jquery-3.7.1.min.js"></script>
+<script src="../bootstrap/js/bootstrap.min.js"></script>
+<script>
+    $(function(){
+        // ★★★ 安全检查：必须是管理员 ★★★
+        var admin = sessionStorage.getItem("currentAdmin");
+        if(!admin) {
+            alert("非法访问！请先登录管理员账号。");
+            window.location.href = "login.html";
+            return;
+        }
+
+        renderAdminOrders();
+    });
+
+    function renderAdminOrders() {
+        var orders = JSON.parse(localStorage.getItem('siteOrders')) || [];
+        var $tbody = $("#admin-order-body");
+        $tbody.empty();
+
+        if(orders.length === 0) {
+            $tbody.html('<tr><td colspan="6" class="text-center">暂无订单数据</td></tr>');
+            return;
+        }
+
+        $.each(orders, function(i, order){
+            var statusHtml = "";
+            var actionHtml = "";
+
+            if(order.status == "未付款") {
+                statusHtml = '<span class="label label-danger">未付款</span>';
+                actionHtml = "等待用户付款";
+            } else if(order.status == "已付款") {
+                statusHtml = '<span class="label label-warning">已付款</span>';
+                actionHtml = `<button class="btn btn-success btn-xs" onclick="shipOrder(${order.orderId})">发货</button>`;
+            } else if(order.status == "已发货") {
+                statusHtml = '<span class="label label-info">已发货</span>';
+                actionHtml = "已发货，等待收货";
+            } else {
+                statusHtml = `<span class="label label-default">${order.status}</span>`;
+            }
+
+            $tbody.append(`
+                <tr>
+                    <td>${order.orderId}</td>
+                    <td>${order.user}</td>
+                    <td>￥${parseFloat(order.amount).toFixed(2)}</td>
+                    <td>${order.createTime}</td>
+                    <td>${statusHtml}</td>
+                    <td>${actionHtml}</td>
+                </tr>
+            `);
+        });
+    }
+
+    function shipOrder(orderId) {
+        if(confirm("确认发货吗？")) {
+            var orders = JSON.parse(localStorage.getItem('siteOrders')) || [];
+            var order = orders.find(o => o.orderId == orderId);
+            if(order) {
+                order.status = "已发货";
+                localStorage.setItem('siteOrders', JSON.stringify(orders));
+                renderAdminOrders();
+                alert("发货成功！");
+            }
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>图书编辑</title>
+    <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row"><div class="col-md-12"><h1>购书网站后台管理平台</h1></div></div>
+    
+    <div class="row">
+        <ul class="nav nav-pills nav-justified" style="margin-bottom: 20px;">
+            <li role="presentation"><a href="../front/bookList.html">前台首页</a></li>
+            <li role="presentation"><a href="bookList.html">图书列表</a></li>
+            <li role="presentation" class="active"><a href="addBook.html">图书编辑</a></li>
+            <li role="presentation"><a href="customerList.html">顾客列表</a></li>
+            <li role="presentation"><a href="orderList.html">订单列表</a></li>
+            <li role="presentation"><a href="login.html">退出</a></li>
+        </ul>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+            <div class="panel panel-primary">
+                <div class="panel-heading" id="panel-title">添加新图书</div>
+                <div class="panel-body">
+                    <form class="form-horizontal" id="bookForm">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">书名*</label>
+                            <div class="col-sm-10"><input type="text" class="form-control" id="title" required></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">作者*</label>
+                            <div class="col-sm-10"><input type="text" class="form-control" id="author" required></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">价格</label>
+                            <div class="col-sm-4"><input type="number" step="0.01" class="form-control" id="price"></div>
+                            <label class="col-sm-2 control-label">库存</label>
+                            <div class="col-sm-4"><input type="number" class="form-control" id="stock"></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">封面路径</label>
+                            <div class="col-sm-10"><input type="text" class="form-control" id="cover" placeholder="../cover/1696788102206.png"></div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-offset-2 col-sm-10">
+                                <button type="submit" class="btn btn-success">保 存</button>
+                                <button type="button" class="btn btn-default" onclick="history.back()">返 回</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../script/jquery-3.7.1.min.js"></script>
+<script src="../bootstrap/js/bootstrap.min.js"></script>
+<script>
+    var editId = sessionStorage.getItem("editingBookId");
+    var allBooks = JSON.parse(localStorage.getItem('siteBooks')) || [];
+
+    $(function(){
+        // ★★★ 安全检查：必须是管理员 ★★★
+        var admin = sessionStorage.getItem("currentAdmin");
+        if(!admin) {
+            alert("非法访问！请先登录管理员账号。");
+            window.location.href = "login.html";
+            return;
+        }
+
+        if(editId) {
+            $("#panel-title").text("修改图书信息");
+            var book = allBooks.find(b => b.id == editId);
+            if(book) {
+                $("#title").val(book.title);
+                $("#author").val(book.author);
+                $("#price").val(book.price);
+                $("#stock").val(book.stock);
+                $("#cover").val(book.cover);
+            }
+        }
+
+        $("#bookForm").submit(function(e){
+            e.preventDefault();
+            
+            var newBook = {
+                id: editId ? parseInt(editId) : (new Date().getTime()),
+                title: $("#title").val(),
+                author: $("#author").val(),
+                price: parseFloat($("#price").val()),
+                stock: parseInt($("#stock").val()),
+                cover: $("#cover").val() || "../cover/1696788102206.png"
+            };
+
+            if(editId) {
+                var index = allBooks.findIndex(b => b.id == editId);
+                if(index !== -1) allBooks[index] = newBook;
+                alert("修改成功！");
+            } else {
+                allBooks.push(newBook);
+                alert("添加成功！");
+            }
+
+            localStorage.setItem('siteBooks', JSON.stringify(allBooks));
+            sessionStorage.removeItem("editingBookId");
+            window.location.href = "bookList.html";
+        });
+    });
+</script>
+</body>
+</html>

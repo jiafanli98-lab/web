@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>管理员列表</title>
+    <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="container-fluid">
+    <div class="row"><div class="col-md-12"><h1>购书网站后台管理平台</h1></div></div>
+    <div class="row">
+        <ul class="nav nav-pills nav-justified" style="margin-bottom: 20px;">
+            <li><a href="bookList.html">图书列表</a></li>
+            <li class="active"><a href="adminList.html">管理员列表</a></li>
+            <li><a href="addAdmin.html">添加管理员</a></li>
+            <li><a href="login.html">退出</a></li>
+        </ul>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            <table class="table table-bordered">
+                <thead><tr><th>ID</th><th>用户名</th><th>状态</th><th>操作</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td>1</td><td>admin</td><td>正常</td>
+                        <td><button class="btn btn-danger btn-xs">删除</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script src="../script/jquery-3.7.1.min.js"></script>
+<script src="../bootstrap/js/bootstrap.min.js"></script>
+</body>
+</html>

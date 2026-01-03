@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>确认下单</title>
+    <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/style.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <div class="navbar-header"><a class="navbar-brand" href="#">小型购书网</a></div>
+    <ul class="nav navbar-nav">
+      <li><a href="bookList.html">首页</a></li>
+      <li><a href="cart.html">购物车</a></li>
+      <li><a href="orderList.html">我的订单</a></li> </ul>
+    <ul class="nav navbar-nav navbar-right" id="nav-user-area"></ul>
+  </div>
+</nav>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <h3>填写并核对订单信息</h3>
+            <hr>
+            <table class="table table-striped table-bordered">
+                <thead>
+                    <tr><th>封面</th><th>书名</th><th>单价</th><th>数量</th><th>小计</th></tr>
+                </thead>
+                <tbody id="order-items-body"></tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="5" class="text-right">
+                            <h4>应付总额：<span class="text-danger" id="total-amount">￥0.00</span></h4>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 col-md-offset-3">
+            <div class="panel panel-primary">
+                <div class="panel-heading">收货人信息</div>
+                <div class="panel-body">
+                    <form id="orderForm" class="form-horizontal">
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">收货人</label>
+                            <div class="col-sm-9"><input type="text" class="form-control" id="receiverName" required></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">电话</label>
+                            <div class="col-sm-9"><input type="text" class="form-control" id="receiverPhone" required></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">地址</label>
+                            <div class="col-sm-9"><input type="text" class="form-control" id="receiverAddress" required></div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-offset-3 col-sm-9">
+                                <button class="btn btn-success btn-block" type="submit">提交订单</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="../script/jquery-3.7.1.min.js"></script>
+<script src="../bootstrap/js/bootstrap.min.js"></script>
+<script>
+    $(function(){
+        // 显示用户登录状态
+        checkUser();
+
+        // ★★★ 安全检查：必须先登录 ★★★
+        var user = sessionStorage.getItem("currentUser");
+        if(!user) {
+            alert("您尚未登录，无法下单！请先登录。");
+            window.location.href = "login.html";
+            return;
+        }
+
+        var cart = JSON.parse(sessionStorage.getItem('myCart')) || [];
+        var totalAmount = 0;
+
+        if(cart.length === 0) {
+            alert("购物车为空，无法下单！");
+            location.href = "bookList.html";
+            return;
+        }
+
+        var $tbody = $("#order-items-body");
+        $.each(cart, function(i, item){
+            var sub = item.price * item.qty;
+            totalAmount += sub;
+            $tbody.append(`
+                <tr>
+                    <td><img src="${item.img}" height="40"></td>
+                    <td>${item.title}</td>
+                    <td>￥${item.price}</td>
+                    <td>${item.qty}</td>
+                    <td>￥${sub.toFixed(2)}</td>
+                </tr>
+            `);
+        });
+        $("#total-amount").text("￥" + totalAmount.toFixed(2));
+
+        $("#orderForm").submit(function(e){
+            e.preventDefault();
+            
+            var orderId = new Date().getTime();
+            var newOrder = {
+                orderId: orderId,
+                createTime: new Date().toLocaleString(),
+                amount: totalAmount,
+                status: "未付款",
+                receiver: $("#receiverName").val(),
+                phone: $("#receiverPhone").val(),
+                address: $("#receiverAddress").val(),
+                items: cart,
+                user: user
+            };
+
+            var orders = JSON.parse(localStorage.getItem('siteOrders')) || [];
+            orders.unshift(newOrder);
+            localStorage.setItem('siteOrders', JSON.stringify(orders));
+
+            // 扣减库存
+            updateStock(cart);
+            // 清空购物车
+            sessionStorage.removeItem('myCart');
+
+            alert("订单提交成功！请前往支付。");
+            location.href = "pay.html?orderId=" + orderId;
+        });
+    });
+
+    function updateStock(cartItems) {
+        var books = JSON.parse(localStorage.getItem('siteBooks')) || [];
+        cartItems.forEach(cartItem => {
+            var book = books.find(b => b.id == cartItem.id);
+            if(book) {
+                book.stock -= cartItem.qty;
+                if(book.stock < 0) book.stock = 0;
+            }
+        });
+        localStorage.setItem('siteBooks', JSON.stringify(books));
+    }
+
+    function checkUser() {
+        var user = sessionStorage.getItem("currentUser");
+        var $nav = $("#nav-user-area");
+        if(user) {
+            $nav.html('<li><p class="navbar-text">你好，' + user + '</p></li><li><a href="#" onclick="logout()">退出</a></li>');
+        } else {
+            $nav.html('<li><a href="login.html">登录</a></li>');
+        }
+    }
+
+    window.logout = function() {
+        sessionStorage.removeItem("currentUser");
+        location.href = "login.html";
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>用户注册</title>
+    <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/style.css" rel="stylesheet">
+    <style>
+        .register-box { margin-top: 50px; border: 1px solid #ddd; padding: 30px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-6 col-md-offset-3 register-box">
+            <h2 class="text-center">用户注册</h2>
+            <hr>
+            <form action="login.html" class="form-horizontal" id="regForm">
+                <div class="form-group">
+                    <label class="col-sm-3 control-label">用户名*</label>
+                    <div class="col-sm-9"><input type="text" class="form-control" id="name" required></div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-3 control-label">密码*</label>
+                    <div class="col-sm-9"><input type="password" class="form-control" id="password" required></div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-3 control-label">所在省*</label>
+                    <div class="col-sm-9">
+                        <select class="form-control" id="province">
+                            <option value="">请选择省份</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="col-sm-3 control-label">所在城市*</label>
+                    <div class="col-sm-9">
+                        <select class="form-control" id="city">
+                            <option value="">请先选择省份</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-sm-offset-3 col-sm-9">
+                        <button type="submit" class="btn btn-primary">注 册</button>
+                    </div>
+                </div>
+            </form>
+            <div class="text-right"><a href="login.html">已有账号？去登录</a></div>
+        </div>
+    </div>
+</div>
+
+<script src="../script/jquery-3.7.1.min.js"></script>
+<script src="../bootstrap/js/bootstrap.min.js"></script>
+<script>
+    // 更完善的数据
+    var cityData = {
+        "北京": ["东城区", "西城区", "朝阳区", "海淀区", "丰台区"],
+        "上海": ["黄浦区", "徐汇区", "长宁区", "浦东新区", "闵行区"],
+        "广东": ["广州", "深圳", "珠海", "佛山", "东莞", "中山"],
+        "江苏": ["南京", "苏州", "无锡", "常州", "南通"],
+        "浙江": ["杭州", "宁波", "温州", "绍兴", "嘉兴"],
+        "四川": ["成都", "绵阳", "德阳", "乐山"],
+        "湖北": ["武汉", "宜昌", "襄阳", "黄石"],
+        "陕西": ["西安", "咸阳", "宝鸡", "汉中"]
+    };
+
+    $(function(){
+        // 初始化省份
+        for(var key in cityData) {
+            $("#province").append("<option value='"+key+"'>"+key+"</option>");
+        }
+
+        // 联动
+        $("#province").change(function(){
+            var prov = $(this).val();
+            var $city = $("#city");
+            $city.empty();
+            if(prov && cityData[prov]){
+                $.each(cityData[prov], function(i, item){ 
+                    $city.append("<option value='"+item+"'>"+item+"</option>"); 
+                });
+            } else {
+                $city.append("<option value=''>请先选择省份</option>");
+            }
+        });
+
+        // 提交拦截
+        $("#regForm").submit(function(e){
+            e.preventDefault();
+            if($("#name").val()=="" || $("#password").val()=="") { 
+                alert("请填写完整"); 
+                return; 
+            }
+            alert("注册成功，请登录！");
+            window.location.href = "login.html";
+        });
+    });
+</script>
+</body>
+</html>

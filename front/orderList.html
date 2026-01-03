@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>我的订单</title>
+    <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/style.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <div class="navbar-header"><a class="navbar-brand" href="#">小型购书网</a></div>
+    <ul class="nav navbar-nav">
+      <li><a href="bookList.html">首页</a></li>
+      <li><a href="cart.html">购物车</a></li>
+      <li class="active"><a href="orderList.html">我的订单</a></li>
+    </ul>
+    <ul class="nav navbar-nav navbar-right" id="nav-user-area"></ul>
+  </div>
+</nav>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <h3>我的订单历史</h3>
+            <hr>
+            <table class="table table-hover table-striped">
+                <thead>
+                    <tr class="info">
+                        <th>订单编号</th>
+                        <th>创建时间</th>
+                        <th>金额</th>
+                        <th>收货人</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="order-list-body"></tbody>
+            </table>
+            <div id="no-order-msg" class="alert alert-info text-center" style="display:none">暂无订单</div>
+        </div>
+    </div>
+</div>
+
+<script src="../script/jquery-3.7.1.min.js"></script>
+<script src="../bootstrap/js/bootstrap.min.js"></script>
+<script>
+    $(function(){
+        checkUser();
+        var orders = JSON.parse(localStorage.getItem('siteOrders')) || [];
+        var currentUser = sessionStorage.getItem("currentUser");
+        
+        // 过滤当前用户的订单
+        var myOrders = orders.filter(o => o.user === currentUser);
+
+        if(myOrders.length === 0) {
+            $("#no-order-msg").show();
+            $("table").hide();
+            return;
+        }
+
+        // 按时间倒序排列
+        myOrders.sort((a, b) => b.orderId - a.orderId);
+
+        $.each(myOrders, function(i, order){
+            var statusLabel = "";
+            var actionBtn = "";
+
+            if(order.status == "未付款") {
+                statusLabel = '<span class="label label-danger">未付款</span>';
+                actionBtn = `<a href="pay.html?orderId=${order.orderId}" class="btn btn-primary btn-xs">去支付</a>`;
+            } else if(order.status == "已付款") {
+                statusLabel = '<span class="label label-success">已付款</span>';
+                actionBtn = `<button class="btn btn-default btn-xs" disabled>等待发货</button>`;
+            } else if(order.status == "已发货") {
+                statusLabel = '<span class="label label-info">已发货</span>';
+                actionBtn = `<button class="btn btn-success btn-xs" onclick="confirmReceive(${order.orderId})">确认收货</button>`;
+            }
+
+            $("#order-list-body").append(`
+                <tr>
+                    <td><a href="orderInfo.html?orderId=${order.orderId}">${order.orderId}</a></td>
+                    <td>${order.createTime}</td>
+                    <td class="text-danger">￥${parseFloat(order.amount).toFixed(2)}</td>
+                    <td>${order.receiver}</td>
+                    <td>${statusLabel}</td>
+                    <td>
+                        ${actionBtn}
+                        <a href="orderInfo.html?orderId=${order.orderId}" class="btn btn-info btn-xs">查看详情</a>
+                    </td>
+                </tr>
+            `);
+        });
+    });
+
+    function checkUser() {
+        var user = sessionStorage.getItem("currentUser");
+        var $nav = $("#nav-user-area");
+        if(user) $nav.html('<li><p class="navbar-text">你好，'+user+'</p></li><li><a href="#" onclick="logout()">退出</a></li>');
+        else $nav.html('<li><a href="login.html">登录</a></li>');
+    }
+    function logout() { sessionStorage.removeItem("currentUser"); location.href="login.html"; }
+</script>
+</body>
+</html>

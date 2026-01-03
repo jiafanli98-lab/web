@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>图书管理</title>
+    <link rel="stylesheet" href="../bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row"><div class="col-md-12"><h1>购书网站后台管理平台 <small id="admin-welcome"></small></h1></div></div>
+    
+    <div class="row">
+        <ul class="nav nav-pills nav-justified" style="margin-bottom: 20px;">
+            <li role="presentation"><a href="../front/bookList.html" target="_blank">前台首页</a></li>
+            <li role="presentation" class="active"><a href="bookList.html">图书列表</a></li>
+            <li role="presentation"><a href="addBook.html" onclick="clearEditMode()">添加图书</a></li>
+            <li role="presentation"><a href="customerList.html">顾客列表</a></li>
+            <li role="presentation"><a href="adminList.html">管理员列表</a></li>
+            <li role="presentation"><a href="orderList.html">订单列表</a></li>
+            <li role="presentation"><a href="#" onclick="logout()">退出</a></li>
+        </ul>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <table class="table table-striped table-bordered">
+                <thead>
+                    <tr><th>ID</th><th>封面</th><th>书名</th><th>作者</th><th>价格</th><th>库存</th><th>操作</th></tr>
+                </thead>
+                <tbody id="book-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="../script/jquery-3.7.1.min.js"></script>
+<script src="../bootstrap/js/bootstrap.min.js"></script>
+<script>
+    var defaultBooks = [
+        {id: 1, title: "一本小小的蓝色逻辑书", author: "布兰登·罗伊尔", price: 85.00, stock: 12, cover: "../cover/1696788102206.png"},
+        {id: 2, title: "Head First 设计模式", author: "Freeman", price: 61.00, stock: 5, cover: "../cover/1696788114052.png"},
+        {id: 3, title: "重构(第2版)", author: "Martin Fowler", price: 88.00, stock: 8, cover: "../cover/1696788123158.png"},
+        {id: 4, title: "大话设计模式", author: "程杰", price: 94.00, stock: 20, cover: "../cover/1696788131118.png"},
+        {id: 5, title: "计算机网络", author: "谢希仁", price: 45.00, stock: 50, cover: "../cover/1696788139527.png"}
+    ];
+
+    $(function(){
+        checkAdmin();
+        renderTable();
+    });
+
+    function renderTable() {
+        // 使用 localStorage，实现与前台数据共享
+        var books = JSON.parse(localStorage.getItem('siteBooks'));
+        if(!books || books.length === 0) {
+            books = defaultBooks;
+            localStorage.setItem('siteBooks', JSON.stringify(books));
+        }
+
+        var $tbody = $("#book-tbody");
+        $tbody.empty();
+        $.each(books, function(i, book){
+            var html = `
+                <tr>
+                    <td>${book.id}</td>
+                    <td><img width="40" src="${book.cover}"></td>
+                    <td>${book.title}</td>
+                    <td>${book.author}</td>
+                    <td>￥${parseFloat(book.price).toFixed(2)}</td>
+                    <td>${book.stock}</td>
+                    <td>
+                        <button class="btn btn-info btn-xs" onclick="editBook(${book.id})">修改</button> 
+                        <button class="btn btn-danger btn-xs" onclick="deleteBook(${book.id})">删除</button>
+                    </td>
+                </tr>
+            `;
+            $tbody.append(html);
+        });
+    }
+
+    function editBook(id) {
+        sessionStorage.setItem("editingBookId", id);
+        window.location.href = "addBook.html";
+    }
+    
+    function deleteBook(id) {
+        if(!confirm("确定删除吗？")) return;
+        var books = JSON.parse(localStorage.getItem('siteBooks'));
+        var newBooks = books.filter(b => b.id !== id);
+        localStorage.setItem('siteBooks', JSON.stringify(newBooks));
+        renderTable();
+    }
+
+    function clearEditMode() { sessionStorage.removeItem("editingBookId"); }
+    function checkAdmin() {
+        var admin = sessionStorage.getItem("currentAdmin");
+        if(admin) $("#admin-welcome").text("欢迎 " + admin);
+        else location.href = "login.html";
+    }
+    function logout() { sessionStorage.removeItem("currentAdmin"); location.href = "login.html"; }
+</script>
+</body>
+</html>

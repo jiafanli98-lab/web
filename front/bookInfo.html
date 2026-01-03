@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>图书详情</title>
+    <link href="../bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="../css/style.css" rel="stylesheet">
+    <style>
+        .book-cover { width: 100%; max-width: 300px; border: 1px solid #ddd; padding: 5px; border-radius: 4px; }
+        .price-tag { color: #d9534f; font-size: 24px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-default">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <a class="navbar-brand" href="#">小型购书网</a>
+    </div>
+    <ul class="nav navbar-nav">
+      <li><a href="bookList.html">首页</a></li>
+      <li><a href="cart.html">购物车</a></li>
+    </ul>
+    <ul class="nav navbar-nav navbar-right" id="nav-user-area"></ul>
+  </div>
+</nav>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <ol class="breadcrumb">
+                <li><a href="bookList.html">首页</a></li>
+                <li><a href="bookList.html">图书列表</a></li>
+                <li class="active">图书详情</li>
+            </ol>
+        </div>
+    </div>
+
+    <div class="row" id="detail-container" style="display:none;">
+        <div class="col-md-4">
+            <img id="book-cover" src="" alt="图书封面" class="book-cover center-block">
+        </div>
+        
+        <div class="col-md-8">
+            <h2 style="margin-top:0;" id="book-title"></h2>
+            <hr>
+            <p><strong>作者：</strong> <span id="book-author"></span></p>
+            <p><strong>出版社：</strong> 模拟出版社</p>
+            <p><strong>库存：</strong> <span id="book-stock"></span></p>
+            <p>
+                <strong>价格：</strong> <span class="price-tag" id="book-price"></span>
+            </p>
+            <br>
+            <p id="action-area">
+                </p>
+            <br>
+            <div class="panel panel-default">
+                <div class="panel-heading"><strong>内容简介</strong></div>
+                <div class="panel-body">
+                    <p>这是一个模拟的图书详情简介。因为我们没有真实的数据库，所以所有书的简介暂时都显示这段话。</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row" id="error-msg" style="display:none;">
+        <div class="col-md-12 text-center">
+            <h3>未找到该图书信息</h3>
+            <a href="bookList.html" class="btn btn-default">返回首页</a>
+        </div>
+    </div>
+</div>
+
+<script src="../script/jquery-3.7.1.min.js"></script>
+<script src="../bootstrap/js/bootstrap.min.js"></script>
+<script>
+    $(function(){
+        checkUser();
+        loadBookDetail();
+    });
+
+    function loadBookDetail() {
+        // 1. 从 URL 获取 id 参数
+        var params = new URLSearchParams(window.location.search);
+        var id = params.get("id");
+        
+        if(!id) { showErr(); return; }
+
+        // 2. 从 localStorage 查找书
+        var books = JSON.parse(localStorage.getItem('siteBooks')) || [];
+        var book = books.find(b => b.id == id);
+
+        if(!book) { showErr(); return; }
+
+        // 3. 填充数据
+        $("#book-title").text(book.title);
+        $("#book-author").text(book.author);
+        $("#book-price").text("￥" + parseFloat(book.price).toFixed(2));
+        $("#book-stock").text(book.stock);
+        $("#book-cover").attr("src", book.cover);
+        
+        $("#detail-container").show();
+
+        // 4. 生成按钮
+        if(book.stock > 0) {
+            $("#action-area").html(`
+                <a href="javascript:void(0);" onclick="addToCart(${book.id})" class="btn btn-danger btn-lg">
+                    <span class="glyphicon glyphicon-shopping-cart"></span> 加入购物车
+                </a>
+            `);
+        } else {
+            $("#action-area").html(`<button class="btn btn-default btn-lg" disabled>暂时无货</button>`);
+        }
+    }
+
+    function addToCart(id) {
+        var books = JSON.parse(localStorage.getItem('siteBooks')) || [];
+        var book = books.find(b => b.id == id);
+        
+        var cart = JSON.parse(sessionStorage.getItem('myCart')) || [];
+        var existingItem = cart.find(item => item.id == id);
+        
+        if(existingItem) existingItem.qty += 1;
+        else cart.push({ id: book.id, title: book.title, price: book.price, img: book.cover, qty: 1 });
+        
+        sessionStorage.setItem('myCart', JSON.stringify(cart));
+        alert("加入成功！");
+        location.href = "cart.html";
+    }
+
+    function showErr() { $("#error-msg").show(); }
+    
+    function checkUser() {
+        var user = sessionStorage.getItem("currentUser");
+        var $nav = $("#nav-user-area");
+        if(user) $nav.html('<li><p class="navbar-text">你好，'+user+'</p></li><li><a href="#" onclick="logout()">退出</a></li>');
+        else $nav.html('<li><a href="login.html">登录</a></li><li><a href="register.html">注册</a></li>');
+    }
+    window.logout = function() { sessionStorage.removeItem("currentUser"); location.reload(); }
+</script>
+</body>
+</html>
